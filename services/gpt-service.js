@@ -1,10 +1,8 @@
 require('colors');
 const EventEmitter = require('events');
 const OpenAI = require('openai');
-const tools = require('../functions/function-manifest');
+const tools = require('../functions/function-manifest'); // Ensure the path is correct
 
-// Import all functions included in function manifest
-// Note: the function name and file name must be the same
 const availableFunctions = {};
 tools.forEach((tool) => {
   let functionName = tool.function.name;
@@ -16,19 +14,17 @@ class GptService extends EventEmitter {
     super();
     this.openai = new OpenAI();
     this.userContext = [
-      { 'role': 'system', 'content': 'You are an outbound sales representative looking for sales leads in Car. You have a youthful and cheery personality. Keep your responses as brief as possible but make every attempt to keep the caller on the phone without being rude. Don\'t ask more than 1 question at a time. Don\'t make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous.you only have to look for a positive or negetive response for buying a Car.if user response is positive use function to mark lead as positive . You must add a \'•\' symbol every 5 to 10 words at natural pauses where your response can be split for text to speech.' },
-      { 'role': 'assistant', 'content': 'Hello! I understand you\'re looking to buy a Car, is that correct?' },
+      { 'role': 'system', 'content': 'You are an outbound sales representative looking for sales leads in cars. You have a youthful and cheery personality. Keep your responses as brief as possible but make every attempt to keep the caller on the phone without being rude. Don\'t ask more than 1 question at a time. Don\'t make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous. You only have to look for a positive or negative response for buying a car. If the user response is positive, use the function to mark the lead as positive. You must add a \'•\' symbol every 5 to 10 words at natural pauses where your response can be split for text to speech.' },
+      { 'role': 'assistant', 'content': 'Hello! I understand you\'re looking to buy a car, is that correct?' },
     ],
-    this.partialResponseIndex = 0;
+      this.partialResponseIndex = 0;
   }
 
-  // Add the callSid to the chat context in case
-  // ChatGPT decides to transfer the call.
-  setCallSid (callSid) {
+  setCallSid(callSid) {
     this.userContext.push({ 'role': 'system', 'content': `callSid: ${callSid}` });
   }
 
-  validateFunctionArgs (args) {
+  validateFunctionArgs(args) {
     try {
       return JSON.parse(args);
     } catch (error) {
@@ -40,7 +36,9 @@ class GptService extends EventEmitter {
     }
   }
 
-  updateUserContext(name, role, text) {
+
+
+  updateUserContext(role, name, text) {
     if (name !== 'user') {
       this.userContext.push({ 'role': role, 'name': name, 'content': text });
     } else {
@@ -49,9 +47,8 @@ class GptService extends EventEmitter {
   }
 
   async completion(text, interactionCount, role = 'user', name = 'user') {
-    this.updateUserContext(name, role, text);
+    this.updateUserContext(role, name, text); // Use the updateUserContext method to maintain consistency
 
-    // Step 1: Send user transcription to Chat GPT
     const stream = await this.openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: this.userContext,
@@ -81,20 +78,15 @@ class GptService extends EventEmitter {
       let content = chunk.choices[0]?.delta?.content || '';
       let deltas = chunk.choices[0].delta;
       finishReason = chunk.choices[0].finish_reason;
-
-      // Step 2: check if GPT wanted to call a function
       if (deltas.tool_calls) {
         // Step 3: Collect the tokens containing function data
         collectToolInformation(deltas);
-      }
 
-      // need to call function on behalf of Chat GPT with the arguments it parsed from the conversation
-      if (finishReason === 'tool_calls') {
+      } if (finishReason === 'tool_calls') {
         // parse JSON string of args into JSON object
 
         const functionToCall = availableFunctions[functionName];
         const validatedArgs = this.validateFunctionArgs(functionArgs);
-        
         // Say a pre-configured message from the function manifest
         // before running the function.
         const toolData = tools.find(tool => tool.function.name === functionName);
@@ -109,17 +101,16 @@ class GptService extends EventEmitter {
 
         // Step 4: send the info on the function call and function response to GPT
         this.updateUserContext('function', functionName, functionResponse);
-        
+
         // call the completion function again but pass in the function response to have OpenAI generate a new assistant response
         await this.completion(functionResponse, interactionCount, 'function', functionName);
       } else {
-        // We use completeResponse for userContext
         completeResponse += content;
         // We use partialResponse to provide a chunk for TTS
         partialResponse += content;
         // Emit last partial response and add complete response to userContext
         if (content.trim().slice(-1) === '•' || finishReason === 'stop') {
-          const gptReply = { 
+          const gptReply = {
             partialResponseIndex: this.partialResponseIndex,
             partialResponse
           };
@@ -129,9 +120,9 @@ class GptService extends EventEmitter {
           partialResponse = '';
         }
       }
+
     }
-    this.userContext.push({'role': 'assistant', 'content': completeResponse});
-    console.log(`GPT -> user context length: ${this.userContext.length}`.green);
+    
   }
 }
 
