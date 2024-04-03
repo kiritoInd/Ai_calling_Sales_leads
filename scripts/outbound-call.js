@@ -1,23 +1,27 @@
-/*
-  You can use this script to place an outbound call
-  to your own mobile phone.
-*/
-
+// outbound-call.js
 require('dotenv').config();
 
-async function makeOutBoundCall() {
+async function makeOutboundCall(number, onCallCompleted) {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
-  
   const client = require('twilio')(accountSid, authToken);
 
-  await client.calls
-    .create({
-      url: `https://${process.env.SERVER}/incoming`,
-      to: process.env.YOUR_NUMBER,
-      from: process.env.FROM_NUMBER
-    })
-    .then(call => console.log(call.sid));
+  client.calls.create({
+    url: `https://${process.env.SERVER}/incoming`,
+    to: number,
+    from: process.env.FROM_NUMBER,
+    statusCallback: `https://${process.env.SERVER}/statusCallback`,
+    statusCallbackMethod: 'POST',
+    statusCallbackEvent: ['completed']
+  })
+  .then(call => {
+    console.log(`Call initiated to ${number} with SID: ${call.sid}`);
+  })
+  .catch(error => {
+    console.error(`Failed to call ${number}:`, error);
+  });
+
+  // The actual invocation of the callback will be handled in the status callback endpoint in app.js
 }
 
-makeOutBoundCall();
+module.exports = makeOutboundCall;

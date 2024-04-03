@@ -1,5 +1,10 @@
 require('dotenv').config();
 require('colors');
+
+
+
+
+const makeOutboundCall = require('../call-gpt/scripts/outbound-call'); 
 const express = require('express');
 const ExpressWs = require('express-ws');
 
@@ -9,9 +14,13 @@ const { TranscriptionService } = require('./services/transcription-service');
 const { TextToSpeechService } = require('./services/tts-service');
 
 const app = express();
+app.use(express.urlencoded({ extended: true }));
 ExpressWs(app);
 
 const PORT = process.env.PORT || 3000;
+
+const numbersToCall = ['+919599932057', '+919810880124']; 
+let currentCallIndex = 0;
 
 app.post('/incoming', (req, res) => {
   res.status(200);
@@ -96,5 +105,37 @@ app.ws('/connection', (ws) => {
   });
 });
 
+
+// Update the /statusCallback endpoint
+app.post('/statusCallback', (req, res) => {
+  const callStatus = req.body.CallStatus;
+  const callSid = req.body.CallSid;
+
+  console.log(`Call ${callSid} completed with status: ${callStatus}`);
+
+  // If the call was completed and there are more numbers to call
+  if (callStatus === 'completed' && currentCallIndex < numbersToCall.length - 1) {
+    // Increment the index to point to the next number
+    currentCallIndex++;
+    // Initiate the next call
+    makeOutboundCall(numbersToCall[currentCallIndex], () => {
+      // This callback is for demonstration. 
+      // The actual call completion handling is done via the statusCallback endpoint in Twilio.
+    });
+  }
+
+  res.status(200).send('OK');
+});
+
+
 app.listen(PORT);
 console.log(`Server running on port ${PORT}`);
+
+
+if (numbersToCall.length > 0) {
+  currentNumber = numbersToCall[currentCallIndex];
+  makeOutboundCall(numbersToCall[currentCallIndex], () => {
+    
+  });
+}
+
