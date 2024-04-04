@@ -2,9 +2,9 @@ const tools = [
   {
     type: 'function',
     function: {
-      name: 'Intreseted',
+      name: 'Yes',
       // say: 'Thank you for your interest! I will mark this as a lead to follow up later.',
-      description: 'Marks a lead as positive based on the lead ID.',
+      description: 'Marks a lead as positive when user says Yes',
       parameters: {
         type: 'object',
         properties: {
@@ -29,9 +29,9 @@ const tools = [
   {
     type: 'function',
     function: {
-      name: 'NotIntreseted',
+      name: 'No',
       // say: 'Noted. I will mark this as a lead to follow up later.',
-      description: 'Marks a lead as negative based on the lead ID.',
+      description: 'Marks a lead as negative when user says No',
       parameters: {
         type: 'object',
         properties: {

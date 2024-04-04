@@ -1,11 +1,11 @@
 // outbound-call.js
 require('dotenv').config();
-
+const getNumberPhn = require('./NumberB');
 async function makeOutboundCall(number, onCallCompleted) {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const client = require('twilio')(accountSid, authToken);
-
+  getNumberPhn.getNumberPhn(number);
   client.calls.create({
     url: `https://${process.env.SERVER}/incoming`,
     to: number,

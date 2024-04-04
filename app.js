@@ -1,10 +1,8 @@
 require('dotenv').config();
 require('colors');
-
-
-
-
-const makeOutboundCall = require('../call-gpt/scripts/outbound-call'); 
+const fs = require('fs');
+const csv = require('csv-parser');
+const makeOutboundCall = require('./FunctonsNGPT/outbound-call'); 
 const express = require('express');
 const ExpressWs = require('express-ws');
 
@@ -19,7 +17,6 @@ ExpressWs(app);
 
 const PORT = process.env.PORT || 3000;
 
-const numbersToCall = ['+919599932057', '+919810880124']; 
 let currentCallIndex = 0;
 
 app.post('/incoming', (req, res) => {
@@ -30,6 +27,8 @@ app.post('/incoming', (req, res) => {
     <Connect>
       <Stream url="wss://${process.env.SERVER}/connection" />
     </Connect>
+    <Pause length="15"/>
+    <Hangup/>
   </Response>
   `);
 });
@@ -131,11 +130,24 @@ app.post('/statusCallback', (req, res) => {
 app.listen(PORT);
 console.log(`Server running on port ${PORT}`);
 
+const numbersToCall = [];
 
-if (numbersToCall.length > 0) {
-  currentNumber = numbersToCall[currentCallIndex];
-  makeOutboundCall(numbersToCall[currentCallIndex], () => {
-    
+fs.createReadStream('number.csv')
+  .pipe(csv())
+  .on('data', (row) => {
+    // Assuming the column containing the numbers is named 'number'
+    numbersToCall.push(row.number);
+  })
+  .on('end', () => {
+    console.log('CSV file successfully processed');
+    // Here you can start your server or make outbound calls
+    // For example, you can invoke the makeOutboundCall function here if the array is not empty
+    if (numbersToCall.length > 0) {
+      currentNumber = numbersToCall[currentCallIndex];
+      makeOutboundCall(numbersToCall[currentCallIndex], () => {
+        // Callback logic here
+      });
+    }
   });
-}
 
+  
