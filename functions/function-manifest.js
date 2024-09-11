@@ -52,6 +52,33 @@ const tools = [
         }
       }
     },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'EndCall',
+      // say: 'Noted. I will mark this as a lead to follow up later.',
+      description: 'End the call',
+      parameters: {
+        type: 'object',
+        properties: {
+          lead: {
+            type: 'string',
+            description: 'Call Ended',
+          },
+        },
+        required: ['callSid'],
+      },
+      returns: {
+        type: 'object',
+        properties: {
+          m: {
+            type: 'String',
+            description: 'Call Ended' 
+          }
+        }
+      }
+    },
   }
 ];
 

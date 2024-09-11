@@ -1,6 +1,7 @@
 // outbound-call.js
 require('dotenv').config();
 const getNumberPhn = require('./NumberB');
+const getSide = require('./EmitSid')
 async function makeOutboundCall(number, onCallCompleted) {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -16,6 +17,10 @@ async function makeOutboundCall(number, onCallCompleted) {
   })
   .then(call => {
     console.log(`Call initiated to ${number} with SID: ${call.sid}`);
+    getSide.getSid(call.sid);
+    console.log(typeof call.sid);
+
+
   })
   .catch(error => {
     console.error(`Failed to call ${number}:`, error);

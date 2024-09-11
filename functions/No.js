@@ -8,6 +8,7 @@ const { getNumberPhn, numberEmitted } = require('../FunctonsNGPT/NumberB');
 numberEmitted.on('numberEmitted', (number) => {
     numbers = number;
 });
+
 async function No(lead) {
   const filePath = path.join(__dirname, 'leads.csv');
 
